@@ -1,0 +1,148 @@
+name: Publish release
+
+# Every push to main computes the next version from conventional commits,
+# updates Cargo.toml/Cargo.lock/CHANGELOG.md, tags, publishes a GitHub
+# Release with a Linux binary, then fast-forwards develop to main.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - CHANGELOG.md
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.compute.outputs.version }}
+      released: ${{ steps.compute.outputs.released }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@git-cliff
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Compute version and decide if a release is needed
+        id: compute
+        run: |
+          set -euo pipefail
+          VERSION="$(git-cliff --config cliff.toml --bumped-version | tail -n 1 | tr -d '[:space:]')"
+          LATEST_TAG="$(git tag --list 'v*' --sort=-v:refname | head -n 1 || true)"
+          echo "Latest tag: ${LATEST_TAG:-none}"
+          echo "Computed version: ${VERSION}"
+          if [[ -z "${VERSION}" || "${VERSION}" == "${LATEST_TAG}" ]]; then
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump version, regenerate changelog, tag and push
+        if: steps.compute.outputs.released == 'true'
+        env:
+          VERSION: ${{ steps.compute.outputs.version }}
+        run: |
+          set -euo pipefail
+          CARGO_VERSION="${VERSION#v}"
+
+          # Only the [package] version line.
+          awk -v new="${CARGO_VERSION}" '
+            /^\[package\]/ { in_pkg=1; print; next }
+            /^\[/ { in_pkg=0 }
+            in_pkg && /^version = / { print "version = \"" new "\""; next }
+            { print }
+          ' Cargo.toml > Cargo.toml.tmp
+          mv Cargo.toml.tmp Cargo.toml
+
+          # Refresh the lockfile entry for this crate without touching deps.
+          cargo update -p roadie
+
+          git-cliff --config cliff.toml --tag "${VERSION}" --output CHANGELOG.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md Cargo.toml Cargo.lock
+          git commit -m "chore(release): ${VERSION}"
+          git tag -a "${VERSION}" -m "Release ${VERSION}"
+          git push origin HEAD:main
+          git push origin "${VERSION}"
+
+  release:
+    needs: bump
+    if: needs.bump.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.bump.outputs.version }}
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@git-cliff
+
+      - name: Generate release notes
+        run: |
+          set -euo pipefail
+          git-cliff --config cliff.toml --latest --strip all --output release-notes.md
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Package binary and checksum
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          strip target/release/roadie -o dist/roadie-linux-x86_64
+          (cd dist && sha256sum roadie-linux-x86_64 > roadie-linux-x86_64.sha256)
+
+      - name: Create GitHub Release and upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "${VERSION}" >/dev/null 2>&1; then
+            gh release upload "${VERSION}" dist/* --clobber
+          else
+            gh release create "${VERSION}" dist/* \
+              --title "${VERSION}" \
+              --notes-file release-notes.md
+          fi
+
+  sync-develop:
+    needs: [bump, release]
+    if: needs.bump.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Fast-forward develop to main
+        run: |
+          set -euo pipefail
+          if ! git ls-remote --exit-code --heads origin develop >/dev/null; then
+            echo "::warning::develop branch does not exist; nothing to sync"
+            exit 0
+          fi
+          git push origin HEAD:develop
