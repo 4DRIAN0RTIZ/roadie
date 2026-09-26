@@ -19,7 +19,7 @@ use super::events::{handle_key, load_repos};
 use super::loader::SummaryLoader;
 use super::ui;
 
-const FOOTER_HINT: &str = "r refresh  ? help  q quit";
+const FOOTER_HINT: &str = "r refresh all  u refresh repo  ? help  q quit";
 
 fn issue(n: u64, title: &str, state: &str, status: &str, ms: Option<&str>) -> Issue {
     let mut labels = vec![Label {

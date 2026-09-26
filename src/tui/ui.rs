@@ -24,6 +24,7 @@ Repo grid
   All-repos card: h/l no-op, j enters repos,
   k from the first repo row returns to it
   r             refetch all cards (otherwise cached)
+  u             refetch only the selected card
                 footer: fetching N/M repos... -> done
   Esc           does nothing here (q quits)
   ?             this help            q     quit
@@ -146,7 +147,7 @@ fn footer_line(app: &App) -> Line<'static> {
         return Line::styled(text, Style::default().fg(color));
     }
     let hint = match app.screen {
-        Screen::Repos => " r refresh  ? help  q quit",
+        Screen::Repos => " r refresh all  u refresh repo  ? help  q quit",
         Screen::Overview | Screen::Board => " esc back  ? help  q quit",
     };
     Line::styled(hint, Style::default().fg(t.muted))
@@ -893,7 +894,7 @@ mod tests {
     #[test]
     fn footer_shows_activity_then_hints_and_messages_win() {
         let mut app = app_with(&["a", "b"]);
-        assert_eq!(line_text(&footer_line(&app)), " r refresh  ? help  q quit");
+        assert_eq!(line_text(&footer_line(&app)), " r refresh all  u refresh repo  ? help  q quit");
         app.screen = Screen::Board;
         assert_eq!(line_text(&footer_line(&app)), " esc back  ? help  q quit");
         app.screen = Screen::Repos;
@@ -912,7 +913,7 @@ mod tests {
         assert_eq!(line_text(&footer_line(&app)), " done");
         app.message = None;
         app.tick(t0 + crate::tui::activity::DONE_TTL);
-        assert_eq!(line_text(&footer_line(&app)), " r refresh  ? help  q quit");
+        assert_eq!(line_text(&footer_line(&app)), " r refresh all  u refresh repo  ? help  q quit");
     }
 
     fn board_app() -> App {

@@ -45,6 +45,16 @@ pub fn refresh_repos(app: &mut App, be: &dyn Backend) {
     }
 }
 
+/// `u` on a repo card: refetches just that card's summary (bypasses cache).
+fn refresh_repo(app: &mut App) {
+    if app.repo_sel == 0 {
+        return;
+    }
+    if let Some(repo) = app.repos.get(app.repo_sel - 1).cloned() {
+        app.request_summary(&repo);
+    }
+}
+
 /// Refetches the open board's issues; true on success (cache updated).
 /// On failure the old issues and cache stay and the error is shown.
 pub fn reload(app: &mut App, be: &dyn Backend) -> bool {
@@ -239,6 +249,7 @@ fn repos_key(app: &mut App, be: &dyn Backend, key: KeyEvent) {
         KeyCode::Char('q') => app.should_quit = true,
         KeyCode::Char('?') => open_help(app),
         KeyCode::Char('r') => refresh_repos(app, be),
+        KeyCode::Char('u') => refresh_repo(app),
         KeyCode::Enter => {
             if app.repo_sel == 0 {
                 load_overview(app, be, false);
@@ -756,6 +767,33 @@ mod tests {
             issue(2, "OPEN", &["roadmap", "roadmap:working"]),
             issue(3, "CLOSED", &["roadmap"]),
         ])
+    }
+
+    #[test]
+    fn u_on_repo_card_refetches_only_that_repo() {
+        let be = FakeBackend {
+            repos: (0..3).map(|i| format!("r{i}")).collect(),
+            ..Default::default()
+        };
+        let mut app = App::new();
+        load_repos(&mut app, &be);
+        app.fetch_queue.clear();
+        app.activity = crate::tui::activity::Activity::Idle;
+        for r in ["r0", "r1", "r2"] {
+            app.summaries
+                .insert(r.into(), SummaryState::Ready(Default::default()));
+        }
+        // On the overview entry `u` does nothing.
+        press(&mut app, &be, &[ch('u')]);
+        assert!(app.fetch_queue.is_empty());
+        // On a card it queues just that repo; a second press does not duplicate.
+        app.repo_sel = 2;
+        press(&mut app, &be, &[ch('u'), ch('u')]);
+        assert_eq!(app.fetch_queue, vec!["r1"]);
+        assert!(matches!(app.summaries["r1"], SummaryState::Loading));
+        assert!(matches!(app.summaries["r0"], SummaryState::Ready(_)));
+        assert!(matches!(app.summaries["r2"], SummaryState::Ready(_)));
+        assert_eq!(app.activity.line().unwrap().0, " fetching 0/1 repos...");
     }
 
     #[test]

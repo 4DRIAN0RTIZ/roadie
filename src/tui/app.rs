@@ -506,6 +506,32 @@ impl App {
         }
     }
 
+    /// Forces a refetch of one repo's summary, leaving every other card and
+    /// queued fetch untouched. No-op if that repo is already loading.
+    pub fn request_summary(&mut self, repo: &str) {
+        if matches!(self.summaries.get(repo), Some(SummaryState::Loading)) {
+            return;
+        }
+        self.ready_at.remove(repo);
+        self.summaries
+            .insert(repo.to_string(), SummaryState::Loading);
+        if !self.fetch_queue.iter().any(|r| r == repo) {
+            self.fetch_queue.push(repo.to_string());
+        }
+        self.activity = match self.activity {
+            Activity::Fetching {
+                done,
+                total,
+                errors,
+            } => Activity::Fetching {
+                done,
+                total: total + 1,
+                errors,
+            },
+            _ => Activity::start(1),
+        };
+    }
+
     /// Sends the current cache to the background writer.
     pub fn persist_cache(&self) {
         if let Some(tx) = &self.persist {
