@@ -342,7 +342,7 @@ fn draw_card(frame: &mut Frame, app: &App, idx: usize, rect: Rect, now: Instant)
     }
     let mut lines: Vec<Line> = vec![];
     if idx == 0 {
-        lines = all_repos_lines(app, inner.width as u16);
+        lines = all_repos_lines(app, inner.width);
     } else if let Some(repo) = repo {
         let state = app.summaries.get(repo);
         let empty = matches!(state, Some(SummaryState::Ready(s)) if s.total() == 0);
@@ -871,7 +871,7 @@ mod tests {
         let badges = "\u{f0eb}2 \u{f073}0 \u{f144}0 \u{f085}0 ";
         assert_eq!(
             col_of(&row_text(&before, 2), badges),
-            Some((70 - badges.chars().count() + 1) / 2)
+            Some((70 - badges.chars().count()).div_ceil(2))
         );
         for glyph in ["\u{f0eb}2", "\u{f073}0", "\u{f144}0", "\u{f085}0"] {
             assert!(wide.contains(glyph), "missing {glyph}");
@@ -913,7 +913,7 @@ mod tests {
         let narrow_text = text(&narrow);
         assert_eq!(
             col_of(&row_text(&narrow, 2), badges),
-            Some((30 - badges.chars().count() + 1) / 2)
+            Some((30 - badges.chars().count()).div_ceil(2))
         );
         for glyph in ["\u{f0eb}2", "\u{f073}0", "\u{f144}0", "\u{f085}0"] {
             assert!(narrow_text.contains(glyph), "missing {glyph}");
