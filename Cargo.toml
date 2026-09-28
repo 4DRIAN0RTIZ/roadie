@@ -2,6 +2,7 @@
 name = "roadie"
 version = "0.2.0"
 edition = "2021"
+license = "GPL-3.0-only"
 description = "Kanban TUI over GitHub Issues, driven by the `roadmap` CLI"
 
 [[bin]]

@@ -170,3 +170,7 @@ Releases are automated with [git-cliff](https://git-cliff.org) and GitHub Action
 - Conventional commits drive the bump: `feat` bumps minor, `fix` (and other releasable types) bump patch, `type!:` or a `BREAKING CHANGE` footer bumps major (while below 1.0 git-cliff follows its configured 0.x rules). `chore`, `test`, `ci`, `style` and `build` do not appear in the changelog.
 - Cut a release: merge `develop` into `main` and push (or run the "Publish release" workflow manually). If there is nothing new since the latest tag, no release is made.
 - Requirements: a GitHub remote with both `develop` and `main` branches must exist, and Actions needs write access to contents (Settings > Actions > Workflow permissions).
+
+## License
+
+roadie is licensed under the [GNU General Public License v3.0](LICENSE).
