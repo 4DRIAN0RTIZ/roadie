@@ -15,6 +15,8 @@ pub struct RepoSummary {
     pub counts: [usize; 4],
     /// Title of the working issue, else the lowest-numbered `now` issue.
     pub active: Option<String>,
+
+    pub latest_release: Option<String>,
 }
 
 impl RepoSummary {
@@ -40,6 +42,7 @@ impl RepoSummary {
             description: description.trim().to_string(),
             counts,
             active,
+            latest_release: None,
         }
     }
 

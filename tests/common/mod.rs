@@ -45,6 +45,7 @@ impl Sandbox {
         sb.use_fixture("issue_list.json", "issue_list.json");
         sb.use_fixture("repo_view.txt", "repo_view_desc.txt");
         sb.use_fixture("milestones.txt", "milestones.txt");
+        sb.put("release.txt", "v1.4.2\n");
         sb.use_fixture("roadmap_create.txt", "roadmap_create.txt");
         sb
     }
@@ -136,6 +137,9 @@ case "$1 $2" in
     n=$(cat "$D/list_count" 2>/dev/null || echo 0); n=$((n+1)); echo "$n" > "$D/list_count"
     if [ -f "$D/issue_list.$n.json" ]; then cat "$D/issue_list.$n.json"; else cat "$D/issue_list.json"; fi ;;
   "repo view") cat "$D/repo_view.txt" ;;
+  "api "*"/releases/latest")
+    if [ -f "$D/release_err" ]; then cat "$D/release_err" >&2; exit 1; fi
+    cat "$D/release.txt" ;;
   api*) cat "$D/milestones.txt" ;;
   *) echo "gh stub: unexpected args: $*" >&2; exit 2 ;;
 esac

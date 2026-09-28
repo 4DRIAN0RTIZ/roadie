@@ -142,6 +142,27 @@ impl GhBackend {
         let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
         self.exec(&self.gh_bin, &args, Some(&dir))
     }
+
+    fn latest_release(&self, repo: &str) -> Result<Option<String>> {
+        let slug = self.slug(repo)?;
+        match self.gh(
+            repo,
+            &[
+                "api",
+                &format!("repos/{slug}/releases/latest"),
+                "--jq",
+                ".tag_name",
+            ],
+        ) {
+            Ok(out) => {
+                let tag = out.trim();
+                Ok((!tag.is_empty()).then(|| tag.to_string()))
+            }
+            // No releases: GitHub answers 404, that's "None", not a failure.
+            Err(e) if e.to_string().contains("HTTP 404") => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
 }
 
 fn s(v: &str) -> String {
@@ -219,7 +240,9 @@ impl Backend for GhBackend {
                 ".description // \"\"",
             ],
         )?;
-        Ok(RepoSummary::from_issues(&desc, &issues))
+        let mut summary = RepoSummary::from_issues(&desc, &issues);
+        summary.latest_release = self.latest_release(repo)?;
+        Ok(summary)
     }
 
     fn milestones(&self, repo: &str) -> Result<Vec<String>> {

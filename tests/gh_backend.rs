@@ -79,13 +79,40 @@ fn repo_summary_counts_open_issues_and_reads_the_description() {
     assert_eq!(s.counts, [1, 1, 0, 1]); // idea, planned, now, working (open only)
     assert_eq!(s.active.as_deref(), Some("Card grid"));
     assert_eq!(s.description, "Kanban TUI over GitHub Issues");
+    assert_eq!(s.latest_release.as_deref(), Some("v1.4.2"));
     let log = sb.gh_log();
-    assert_eq!(log.len(), 2, "one issues call and one description call");
+    assert_eq!(
+        log.len(),
+        3,
+        "one issues call, one description call and one release call"
+    );
     for part in ["--state\topen", "--limit\t300", "number,title,labels"] {
         assert!(log[0].contains(part), "missing {part} in {}", log[0]);
     }
     assert!(log[1].starts_with("repo\tview\t"));
     assert!(log[1].contains("--json\tdescription"));
+    assert!(
+        log[2].starts_with("api\trepos/acme/widgets/releases/latest\t"),
+        "{}",
+        log[2]
+    );
+    assert!(log[2].contains("--jq\t.tag_name"));
+}
+
+#[test]
+fn repo_without_releases_has_no_latest_release() {
+    let sb = sandbox_with_repo("norelease");
+    sb.put("release_err", "gh: Not Found (HTTP 404)");
+    let s = sb.backend().repo_summary("widgets").unwrap();
+    assert_eq!(s.latest_release, None);
+}
+
+#[test]
+fn release_errors_other_than_404_are_surfaced() {
+    let sb = sandbox_with_repo("releaseerr");
+    sb.put("release_err", "gh: Server Error (HTTP 500)");
+    let err = sb.backend().repo_summary("widgets").unwrap_err();
+    assert!(err.to_string().contains("HTTP 500"), "{err}");
 }
 
 #[test]

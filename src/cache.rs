@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::{Issue, RepoSummary};
 
 /// Bump when the on-disk layout changes; other versions are ignored.
-pub const SCHEMA: u32 = 1;
+pub const SCHEMA: u32 = 2;
 pub const FILE_NAME: &str = "cache.json";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -198,6 +198,7 @@ mod tests {
                 description: "d".into(),
                 counts: [1, 2, 3, 4],
                 active: Some("x".into()),
+                latest_release: None,
             },
             100,
         );

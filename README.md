@@ -41,9 +41,16 @@ slot stays empty so the layout never reflows); a failed load shows a red
 `err` card. Repos without roadmap issues are dimmed. On truecolor
 terminals (`COLORTERM=truecolor|24bit`) each whole card (border and text)
 fades in over ~700ms (smoothstep, small stagger between cards that arrive together) when its data arrives; elsewhere it appears instantly.
-The all-repos card is always drawn and shows `N/M repos loaded`. The UI
-redraws fast (~33ms) only while loads or fades are active. Enter works on
-a card that has not loaded yet.
+The all-repos card shows Nerd Font badges for `idea`, `planned`, `now` and
+`working`, each with its count, plus the total of open issues, active repos,
+and loaded/total repos. When applicable, it shows a conditional alert for
+failed repos. It lists up to three active works as `repo — title`, or
+`No active work` when there are none. Metrics and active work use the full
+card layout; narrow terminals use compact, truncated text. The card remains
+selectable, and `Enter` opens the overview.
+
+The UI redraws fast (~33ms) only while loads or fades are active. Enter works
+on a card that has not loaded yet.
 
 The footer is a log-style line (like hteam-cli's status bar): while cards
 load it reads `fetching N/M repos...`, then `done, M repos loaded` (or

@@ -63,6 +63,7 @@ fn backend() -> FakeBackend {
                 description: format!("{r} description"),
                 counts: [0, 1, 0, 1],
                 active: Some("Beta thing".into()),
+                latest_release: None,
             },
         );
     }

@@ -2,7 +2,7 @@
 use std::time::Instant;
 
 use ratatui::{
-    layout::{Constraint, Layout, Rect},
+    layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Wrap},
@@ -53,6 +53,8 @@ WIP limit: only one issue in `working` per repo. Moving a second
 one asks for confirmation (y).
 
 Body convention: short prose, 2-4 lines, no bold+colon bullet lists.";
+
+const STATUS_GLYPHS: [&str; 4] = ["\u{f0eb}", "\u{f073}", "\u{f144}", "\u{f085}"];
 
 pub fn draw(frame: &mut Frame, app: &App) {
     draw_at(frame, app, Instant::now());
@@ -199,12 +201,7 @@ fn draw_repos(frame: &mut Frame, app: &App, area: Rect, now: Instant) {
 fn badge_line(app: &App, counts: [usize; 4], fade: f32) -> Line<'static> {
     let t = &app.theme;
     let mut spans = vec![];
-    for (c, n) in BADGE_COLUMNS.iter().zip(counts) {
-        let short = match c {
-            Column::Planned => "plan",
-            Column::Working => "work",
-            other => other.title(),
-        };
+    for ((c, n), glyph) in BADGE_COLUMNS.iter().zip(counts).zip(STATUS_GLYPHS) {
         let style = if n == 0 {
             Style::default().fg(faded(app, t.muted, fade))
         } else {
@@ -212,7 +209,7 @@ fn badge_line(app: &App, counts: [usize; 4], fade: f32) -> Line<'static> {
                 .fg(faded(app, t.column_color(*c), fade))
                 .add_modifier(Modifier::BOLD)
         };
-        spans.push(Span::styled(format!("{short}:{n}"), style));
+        spans.push(Span::styled(format!("{glyph}{n}"), style));
         spans.push(Span::raw(" "));
     }
     Line::from(spans)
@@ -223,25 +220,71 @@ fn faded(app: &App, color: Color, fade: f32) -> Color {
     anim::fade_toward(app.theme.background, color, fade)
 }
 
-fn draw_wide_card(frame: &mut Frame, app: &App, inner: Rect) {
+fn all_repos_lines(app: &App, width: u16) -> Vec<Line<'static>> {
     let dim = Style::default().fg(app.theme.muted);
-    let bold = Style::default().add_modifier(Modifier::BOLD);
     let (ready, total) = (loaded_repos(app), app.repos.len());
-    let mut counts = badge_line(app, domain::aggregate(ready.iter().copied()), 1.0);
-    counts.spans.push(Span::styled(
-        format!(" {}/{} repos loaded", ready.len(), total),
-        dim,
-    ));
-    let lines = vec![
-        Line::styled("* All repos", bold),
-        Line::styled(
-            "Open roadmap issues across every repo (Enter opens overview)",
-            dim,
-        ),
-        Line::raw(""),
-        counts,
-    ];
-    frame.render_widget(Paragraph::new(lines), inner);
+    let counts = domain::aggregate(ready.iter().copied());
+    let open_issues = counts.iter().sum::<usize>();
+    let active_repos = ready.iter().filter(|summary| summary.active.is_some()).count();
+    let failed_repos = app
+        .repos
+        .iter()
+        .filter(|repo| matches!(app.summaries.get(*repo), Some(SummaryState::Failed(_))))
+        .count();
+    let metrics = if width < 40 {
+        format!(
+            "{open_issues} open·{active_repos} active·{}/{} loaded",
+            ready.len(),
+            total
+        )
+    } else {
+        format!(
+            "{open_issues} open issues · {active_repos} active repos · {}/{} loaded",
+            ready.len(),
+            total
+        )
+    };
+    let active: Vec<String> = app
+        .repos
+        .iter()
+        .filter_map(|repo| {
+            app.summaries.get(repo).and_then(|state| match state {
+                SummaryState::Ready(summary) => summary
+                    .active
+                    .as_ref()
+                    .map(|title| format!("{repo} — {title}")),
+                _ => None,
+            })
+        })
+        .take(3)
+        .collect();
+    let mut lines = vec![badge_line(app, counts, 1.0)];
+    let mut metric_spans = vec![Span::styled(grid::truncate(&metrics, usize::from(width)), dim)];
+    let remaining = usize::from(width).saturating_sub(metrics.chars().count());
+    if failed_repos > 0 && remaining > 0 {
+        metric_spans.push(Span::styled(
+            grid::truncate(&format!(" · ! {failed_repos} failed"), remaining),
+            Style::default().fg(app.theme.danger),
+        ));
+    }
+    lines.push(Line::from(metric_spans));
+    if active.is_empty() {
+        lines.push(Line::styled("No active work", dim));
+    } else {
+        lines.extend(
+            active
+                .iter()
+                .map(|work| Line::styled(grid::truncate(work, usize::from(width)), dim)),
+        );
+    }
+    lines
+}
+
+fn draw_all_repos_card(frame: &mut Frame, app: &App, inner: Rect) {
+    frame.render_widget(
+        Paragraph::new(all_repos_lines(app, inner.width)).alignment(Alignment::Center),
+        inner,
+    );
 }
 
 fn loaded_repos(app: &App) -> Vec<&RepoSummary> {
@@ -288,30 +331,33 @@ fn draw_card(frame: &mut Frame, app: &App, idx: usize, rect: Rect, now: Instant)
     let bold = Style::default().add_modifier(Modifier::BOLD);
 
     if idx == 0 && app.grid_cols.get() > 1 {
-        draw_wide_card(frame, app, inner);
+        draw_all_repos_card(frame, app, inner);
         return;
     }
     let mut lines: Vec<Line> = vec![];
     if idx == 0 {
-        let ready = loaded_repos(app);
-        lines.push(Line::styled("* All repos", bold));
-        lines.push(Line::styled("Open roadmap issues everywhere", dim));
-        lines.push(Line::raw(""));
-        lines.push(badge_line(
-            app,
-            domain::aggregate(ready.iter().copied()),
-            1.0,
-        ));
-        lines.push(Line::styled(
-            format!("{}/{} repos loaded", ready.len(), app.repos.len()),
-            dim,
-        ));
+        lines = all_repos_lines(app, inner.width as u16);
     } else if let Some(repo) = repo {
         let state = app.summaries.get(repo);
         let empty = matches!(state, Some(SummaryState::Ready(s)) if s.total() == 0);
         let text = if empty { t.muted } else { t.foreground };
-        let name = grid::truncate(repo, w.saturating_sub(4));
-        let mut title = vec![Span::styled(name, bold.fg(f(text)))];
+        let release = match state {
+            Some(SummaryState::Ready(s)) => s.latest_release.as_deref(),
+            _ => None,
+        };
+        // Drop the release when the card is too narrow to keep a readable name.
+        let release = release.filter(|r| r.chars().count() + 6 <= w);
+        let name_w = match release {
+            Some(r) => w.saturating_sub(r.chars().count() + 1),
+            None => w.saturating_sub(4),
+        };
+        let name = grid::truncate(repo, name_w);
+        let mut title = vec![Span::styled(name.clone(), bold.fg(f(text)))];
+        if let Some(r) = release {
+            let pad = w.saturating_sub(name.chars().count() + r.chars().count());
+            title.push(Span::raw(" ".repeat(pad)));
+            title.push(Span::styled(r.to_string(), dim));
+        }
         if matches!(state, Some(SummaryState::Failed(_))) {
             title.push(Span::styled(" err", Style::default().fg(f(t.danger))));
         }
@@ -351,7 +397,12 @@ fn draw_card(frame: &mut Frame, app: &App, idx: usize, rect: Rect, now: Instant)
             });
         }
     }
-    frame.render_widget(Paragraph::new(lines), inner);
+    let paragraph = Paragraph::new(lines);
+    if idx == 0 {
+        frame.render_widget(paragraph.alignment(Alignment::Center), inner);
+    } else {
+        frame.render_widget(paragraph, inner);
+    }
 }
 
 fn draw_overview(frame: &mut Frame, app: &App, area: Rect) {
@@ -735,6 +786,7 @@ mod tests {
             description: desc.into(),
             counts,
             active: None,
+            latest_release: None,
         })
     }
 
@@ -756,6 +808,7 @@ mod tests {
                 description: "A nice repo".into(),
                 counts: [1, 0, 0, 2],
                 active: Some("Ship it".into()),
+                latest_release: None,
             }),
         );
         app.summaries.insert("repo2".into(), ready("", [0; 4]));
@@ -763,7 +816,6 @@ mod tests {
         let out = text(&render_at(&app, 70, 24, Instant::now()));
         assert_eq!(app_grid_cols(&app), 2);
         for needle in [
-            "All repos",
             "err",
             "boom",
             "A nice repo",
@@ -772,6 +824,12 @@ mod tests {
         ] {
             assert!(out.contains(needle), "missing {needle}");
         }
+        assert!(out.contains("\u{f0eb}1") && out.contains("\u{f085}2"));
+        assert!(!out.contains("█▀█ █▀█ █▀█ ██▄ ███ ███"));
+        assert!(out.contains("3 open issues"));
+        assert!(out.contains("2/4 loaded"));
+        assert!(out.contains("1 active repos"));
+        assert!(out.contains("! 1 failed"));
         // Loading slot: nothing at all, and no placeholder text anywhere.
         assert!(!out.contains("repo3") && !out.contains("loading..."));
     }
@@ -787,6 +845,8 @@ mod tests {
         for r in app.repos.clone() {
             app.summaries.insert(r, ready("d", [0; 4]));
         }
+        let initial = text(&render_at(&app, 70, 24, Instant::now()));
+        assert!(initial.contains("No active work"));
         app.repo_sel = 8;
         let out = text(&render_at(&app, 70, 24, Instant::now()));
         assert!(out.contains("repo7") && !out.contains("repo1 "));
@@ -797,12 +857,32 @@ mod tests {
     #[test]
     fn wide_card_alone_first_and_layout_stable_while_loading() {
         let mut app = app_with(&["one", "two"]);
-        app.summaries.insert("one".into(), ready("", [2, 0, 0, 0]));
+        app.summaries.insert(
+            "one".into(),
+            SummaryState::Ready(RepoSummary {
+                counts: [2, 0, 0, 0],
+                active: Some("Ship it".into()),
+                ..RepoSummary::default()
+            }),
+        );
         app.summaries.insert("two".into(), SummaryState::Loading);
         let before = render_at(&app, 70, 22, Instant::now());
         let wide: String = (1..8).map(|y| row_text(&before, y)).collect();
-        assert!(wide.contains("idea:2") && wide.contains("1/2 repos loaded"));
-        assert!(!wide.contains("one"));
+        let badges = "\u{f0eb}2 \u{f073}0 \u{f144}0 \u{f085}0 ";
+        assert_eq!(
+            col_of(&row_text(&before, 2), badges),
+            Some((70 - badges.chars().count() + 1) / 2)
+        );
+        for glyph in ["\u{f0eb}2", "\u{f073}0", "\u{f144}0", "\u{f085}0"] {
+            assert!(wide.contains(glyph), "missing {glyph}");
+        }
+        assert!(!wide.contains("█▀█ █▀█ █▀█ ██▄ ███ ███"));
+        assert!(wide.contains("2 open issues"));
+        assert!(wide.contains("1/2 loaded"));
+        assert_eq!(wide.matches("1/2 loaded").count(), 1);
+        assert!(wide.contains("1 active repos"));
+        assert!(wide.contains("one — Ship it"));
+        assert!(!wide.contains("repos failed"));
         let line = row_text(&before, 9);
         assert!(line.contains("one") && !line.contains("two"));
         // The reserved slot is blank (no border, nothing) on the right half.
@@ -825,10 +905,26 @@ mod tests {
             col_of(&row_text(&after, 9), "one")
         );
         assert_eq!(col_of(&row_text(&after, 9), "two"), Some(35 + 1));
-        assert!(row_text(&after, 5).contains("2/2 repos loaded"));
+        let after_text = text(&after);
+        assert!(after_text.contains("2/2 loaded"));
+        assert!(after_text.contains("2 open issues"));
         // One column: the all-repos card is a normal card.
         let narrow = render_at(&app, 30, 30, Instant::now());
-        assert!(text(&narrow).contains("All repos"));
+        let narrow_text = text(&narrow);
+        assert_eq!(
+            col_of(&row_text(&narrow, 2), badges),
+            Some((30 - badges.chars().count() + 1) / 2)
+        );
+        for glyph in ["\u{f0eb}2", "\u{f073}0", "\u{f144}0", "\u{f085}0"] {
+            assert!(narrow_text.contains(glyph), "missing {glyph}");
+        }
+        assert!(!narrow_text.contains("█▀█ █▀█ █▀█ ██▄ ███ ███"));
+        assert!(narrow_text.contains("2 open·1 active·2/2 loaded"));
+        assert!(narrow_text.contains("2/2 loaded"));
+        assert_eq!(narrow_text.matches("2/2 loaded").count(), 1);
+        assert!(narrow_text.contains("1 active"));
+        assert!(narrow_text.contains("one — Ship it"));
+        assert!(!narrow_text.contains("repos failed"));
     }
 
     #[test]

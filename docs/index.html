@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11100e">
+  <meta name="description" content="Roadie is a terminal-first Kanban board for GitHub Issues, built for people who think in repositories and ship from the keyboard.">
+  <title>Roadie — issues, arranged for work</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="Roadie home"><span class="mark">+</span> roadie</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" class="site-nav" aria-label="Main navigation">
+      <a href="#why">Why Roadie</a>
+      <a href="#workflow">How it works</a>
+      <a href="#install">Install</a>
+      <a class="nav-github" href="https://github.com/4DRIAN0RTIZ/roadie" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-kicker"><span>01 / terminal logistics</span><span>open source / rust</span></div>
+      <div class="hero-layout">
+        <div class="hero-copy">
+          <p class="overline">A quieter way to move work</p>
+          <h1 id="hero-title">Issues in order.<br><em>Hands on keys.</em></h1>
+          <p class="hero-lede">Roadie is a terminal-first Kanban board for GitHub Issues. Scan every repository, pick the next thing, and keep the whole plan close to your shell.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install">Install Roadie <span aria-hidden="true">↓</span></a>
+            <a class="button button-quiet" href="https://github.com/4DRIAN0RTIZ/roadie" target="_blank" rel="noreferrer">Read the source <span aria-hidden="true">↗</span></a>
+          </div>
+          <dl class="hero-facts">
+            <div><dt>model</dt><dd>GitHub Issues</dd></div>
+            <div><dt>interface</dt><dd>keyboard + TUI</dd></div>
+            <div><dt>working WIP</dt><dd>1 / repo</dd></div>
+          </dl>
+        </div>
+
+        <div class="terminal-window" aria-label="Illustration of the Roadie repository picker" role="img">
+          <div class="terminal-chrome"><span class="traffic-light red"></span><span class="traffic-light amber"></span><span class="traffic-light green"></span><span class="terminal-title">roadie — repos</span><span class="terminal-mode">LIVE</span></div>
+          <div class="terminal-screen">
+            <div class="terminal-topline"><span>ROADIE</span><span>3 repos / 12 issues</span></div>
+            <div class="terminal-rule">────────────────────────────────────────────────────────</div>
+            <div class="repo-picker">
+              <article class="repo-card repo-card-active"><div class="card-head"><strong>all repos</strong><span class="card-state">●</span></div><p>work in view</p><div class="mini-metrics"><span>idea <b>04</b></span><span>now <b>03</b></span><span>done <b>08</b></span></div></article>
+              <article class="repo-card"><div class="card-head"><strong>roadie</strong><span class="card-count">06</span></div><p>terminal kanban</p><div class="card-bar"><i style="width:58%"></i></div></article>
+              <article class="repo-card"><div class="card-head"><strong>atlas</strong><span class="card-count">04</span></div><p>release notes</p><div class="card-bar"><i style="width:32%"></i></div></article>
+              <article class="repo-card"><div class="card-head"><strong>mfp</strong><span class="card-count">02</span></div><p>music for code</p><div class="card-bar"><i style="width:76%"></i></div></article>
+            </div>
+            <div class="terminal-footer"><span><b>↑↓</b> move</span><span><b>enter</b> open</span><span><b>r</b> refresh</span><span class="cursor-block" aria-hidden="true">▌</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-side-note"><span class="side-line"></span><span>Local scan first.<br>Network later.</span></div>
+    </section>
+
+    <section class="section why-section" id="why" aria-labelledby="why-title">
+      <div class="section-aside"><span class="section-number">02</span><span>What it keeps clear</span></div>
+      <div class="section-body">
+        <p class="overline">The useful middle layer</p>
+        <h2 id="why-title">A board that respects<br><em>the way terminals work.</em></h2>
+        <div class="feature-grid">
+          <article class="feature feature-wide"><span class="feature-index">01</span><h3>Repositories, not projects</h3><p>Roadie finds your local GitHub-shaped repos and puts their roadmap issues in one calm overview. Open a board only when you need the detail.</p><span class="feature-tag">local scan → remote detail</span></article>
+          <article class="feature"><span class="feature-index">02</span><h3>Five honest states</h3><p><code>idea</code> to <code>planned</code> to <code>now</code> to <code>working</code> to <code>done</code>. No phantom project metadata, just labels and closed issues.</p></article>
+          <article class="feature feature-accent"><span class="feature-index">03</span><h3>Keep your attention</h3><p>One active item per repo. The WIP limit is visible in the board, so “working” stays a decision rather than a parking lot.</p><strong class="feature-stat">01 <small>WIP / repo</small></strong></article>
+          <article class="feature"><span class="feature-index">04</span><h3>Cache first, fetch behind</h3><p>Cards appear from disk immediately. Missing stats load asynchronously, and your own actions update the cache so it never falls behind.</p></article>
+          <article class="feature feature-wide"><span class="feature-index">05</span><h3>GitHub stays the source of truth</h3><p>Roadie uses GitHub Issues, not Projects v2. Create, move, comment, close, and reopen from the TUI while the familiar issue history remains in GitHub.</p><span class="feature-tag">issue-only / no lock-in</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section board-section" id="workflow" aria-labelledby="workflow-title">
+      <div class="section-aside"><span class="section-number">03</span><span>One working view</span></div>
+      <div class="section-body">
+        <div class="board-heading"><div><p class="overline">The board</p><h2 id="workflow-title">From thought<br><em>to done.</em></h2></div><p class="board-intro">The same labels you already use become a working surface that is fast enough to live beside your terminal.</p></div>
+        <div class="board-shell">
+          <div class="board-toolbar"><span><b>roadie</b> / roadmap</span><span class="board-sync">● cached 2m ago <button class="refresh-demo" type="button">refresh</button></span></div>
+          <div class="board-columns" role="tabpanel" aria-label="Interactive sample board">
+            <div class="kanban-column"><div class="column-title"><span>idea</span><b>02</b></div><article class="issue-card"><span class="issue-number">#42</span><h3>Keyboard-driven filters</h3><p>roadie</p><div class="issue-meta"><span class="issue-dot dot-amber"></span><span>low signal</span></div></article><article class="issue-card issue-muted"><span class="issue-number">#38</span><h3>Repo grouping</h3><p>atlas</p></article></div>
+            <div class="kanban-column"><div class="column-title"><span>planned</span><b>03</b></div><article class="issue-card"><span class="issue-number">#17</span><h3>Release checklist</h3><p>mfp</p><div class="issue-meta"><span class="issue-dot dot-blue"></span><span>next up</span></div></article></div>
+            <div class="kanban-column column-now"><div class="column-title"><span>now</span><b>01</b></div><article class="issue-card"><span class="issue-number">#51</span><h3>Async card loading</h3><p>roadie</p><div class="issue-meta"><span class="issue-dot dot-orange"></span><span>focus</span></div></article></div>
+            <div class="kanban-column"><div class="column-title"><span>working</span><b>01</b></div><article class="issue-card issue-active"><span class="issue-number">#49</span><h3>Cache invalidation</h3><p>roadie</p><div class="issue-meta"><span class="issue-dot dot-green"></span><span>1 / 1 WIP</span></div></article></div>
+            <div class="kanban-column"><div class="column-title"><span>done</span><b>05</b></div><article class="issue-card issue-done"><span class="issue-number">#36</span><h3>Repo picker</h3><p>roadie</p><div class="issue-meta"><span class="issue-dot dot-done"></span><span>closed</span></div></article></div>
+          </div>
+          <div class="board-keys"><span><kbd>h</kbd><kbd>l</kbd> columns</span><span><kbd>j</kbd><kbd>k</kbd> cards</span><span><kbd>H</kbd><kbd>L</kbd> move</span><span><kbd>enter</kbd> inspect</span><span><kbd>?</kbd> help</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section install-section" id="install" aria-labelledby="install-title">
+      <div class="section-aside"><span class="section-number">04</span><span>Start small</span></div>
+      <div class="section-body install-layout">
+        <div><p class="overline">Installation</p><h2 id="install-title">Put the board<br><em>where you work.</em></h2><p class="install-copy">Roadie needs the tools that already know your repositories: Git, an authenticated GitHub CLI, and the <code>roadmap</code> command.</p><a class="text-link" href="https://github.com/4DRIAN0RTIZ/roadie#install" target="_blank" rel="noreferrer">See requirements in the README ↗</a></div>
+        <div class="command-stack">
+          <div class="command-block"><span class="command-label">01 / install</span><code><span class="prompt">$</span> cargo install --path .</code><button class="copy-button" type="button" data-copy="cargo install --path ." aria-label="Copy install command">copy</button></div>
+          <div class="command-block"><span class="command-label">02 / launch</span><code><span class="prompt">$</span> roadie</code><button class="copy-button" type="button" data-copy="roadie" aria-label="Copy launch command">copy</button></div>
+          <div class="command-block command-note"><span class="command-label">environment</span><code>ROADMAP_PROJECTS_DIR=<span class="muted">~/Projects</span><br>ROADMAP_BIN=<span class="muted">~/bin/roadmap</span></code></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow-strip" aria-label="Roadie workflow summary">
+      <div class="flow-step"><span>01</span><strong>scan</strong><small>local origins</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><span>02</span><strong>load</strong><small>cached cards</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><span>03</span><strong>focus</strong><small>one active item</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step"><span>04</span><strong>ship</strong><small>GitHub history</small></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-top"><a class="wordmark" href="#top"><span class="mark">+</span> roadie</a><p>Less project management. More moving work.</p></div>
+    <div class="footer-bottom"><span>Built for the shell.</span><nav aria-label="Footer navigation"><a href="https://github.com/4DRIAN0RTIZ/roadie" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://github.com/4DRIAN0RTIZ/roadie/issues" target="_blank" rel="noreferrer">Issues ↗</a><a href="https://github.com/4DRIAN0RTIZ/roadie/blob/main/LICENSE" target="_blank" rel="noreferrer">License ↗</a></nav></div>
+  </footer>
+  <script src="js/site.js" defer></script>
+</body>
+</html>
