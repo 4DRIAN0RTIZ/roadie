@@ -215,12 +215,12 @@ fn empty_cache_launch_shows_fetching_then_cards_then_done_then_hints() {
     f.launch();
     // Instant list, but cards are not drawn until their summary arrives.
     let s = f.screen();
-    assert!(s.contains("All repos") && !s.contains("alpha description"));
+    assert!(s.contains("0/2 loaded") && !s.contains("alpha description"));
     assert!(f.footer().contains("fetching 0/2 repos..."));
     f.settle();
     let s = f.screen();
     assert!(s.contains("alpha") && s.contains("beta description"));
-    assert!(s.contains("plan:1") && s.contains("work:1"));
+    assert!(s.contains("\u{f073}1") && s.contains("\u{f085}1"));
     assert!(s.contains("> Beta thing"));
     assert_eq!(f.footer(), "done, 2 repos loaded");
     f.advance(2900);
