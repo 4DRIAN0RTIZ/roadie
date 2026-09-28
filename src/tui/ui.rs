@@ -225,7 +225,10 @@ fn all_repos_lines(app: &App, width: u16) -> Vec<Line<'static>> {
     let (ready, total) = (loaded_repos(app), app.repos.len());
     let counts = domain::aggregate(ready.iter().copied());
     let open_issues = counts.iter().sum::<usize>();
-    let active_repos = ready.iter().filter(|summary| summary.active.is_some()).count();
+    let active_repos = ready
+        .iter()
+        .filter(|summary| summary.active.is_some())
+        .count();
     let failed_repos = app
         .repos
         .iter()
@@ -259,7 +262,10 @@ fn all_repos_lines(app: &App, width: u16) -> Vec<Line<'static>> {
         .take(3)
         .collect();
     let mut lines = vec![badge_line(app, counts, 1.0)];
-    let mut metric_spans = vec![Span::styled(grid::truncate(&metrics, usize::from(width)), dim)];
+    let mut metric_spans = vec![Span::styled(
+        grid::truncate(&metrics, usize::from(width)),
+        dim,
+    )];
     let remaining = usize::from(width).saturating_sub(metrics.chars().count());
     if failed_repos > 0 && remaining > 0 {
         metric_spans.push(Span::styled(
@@ -815,13 +821,7 @@ mod tests {
         app.summaries.insert("repo3".into(), SummaryState::Loading);
         let out = text(&render_at(&app, 70, 24, Instant::now()));
         assert_eq!(app_grid_cols(&app), 2);
-        for needle in [
-            "err",
-            "boom",
-            "A nice repo",
-            "Ship it",
-            "no description",
-        ] {
+        for needle in ["err", "boom", "A nice repo", "Ship it", "no description"] {
             assert!(out.contains(needle), "missing {needle}");
         }
         assert!(out.contains("\u{f0eb}1") && out.contains("\u{f085}2"));
@@ -990,7 +990,10 @@ mod tests {
     #[test]
     fn footer_shows_activity_then_hints_and_messages_win() {
         let mut app = app_with(&["a", "b"]);
-        assert_eq!(line_text(&footer_line(&app)), " r refresh all  u refresh repo  ? help  q quit");
+        assert_eq!(
+            line_text(&footer_line(&app)),
+            " r refresh all  u refresh repo  ? help  q quit"
+        );
         app.screen = Screen::Board;
         assert_eq!(line_text(&footer_line(&app)), " esc back  ? help  q quit");
         app.screen = Screen::Repos;
@@ -1009,7 +1012,10 @@ mod tests {
         assert_eq!(line_text(&footer_line(&app)), " done");
         app.message = None;
         app.tick(t0 + crate::tui::activity::DONE_TTL);
-        assert_eq!(line_text(&footer_line(&app)), " r refresh all  u refresh repo  ? help  q quit");
+        assert_eq!(
+            line_text(&footer_line(&app)),
+            " r refresh all  u refresh repo  ? help  q quit"
+        );
     }
 
     fn board_app() -> App {
