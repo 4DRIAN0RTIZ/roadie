@@ -1,10 +1,10 @@
 name: Update unreleased changelog
 
 # Keeps the [Unreleased] section of CHANGELOG.md current on every push to
-# develop. Released sections are written by release.yml on main.
+# dev. Released sections are written by release.yml on main.
 on:
   push:
-    branches: [develop]
+    branches: [dev]
     paths-ignore:
       - CHANGELOG.md
 

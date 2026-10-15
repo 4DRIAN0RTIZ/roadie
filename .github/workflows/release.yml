@@ -2,7 +2,7 @@ name: Publish release
 
 # Every push to main computes the next version from conventional commits,
 # updates Cargo.toml/Cargo.lock/CHANGELOG.md, tags, publishes a GitHub
-# Release with a Linux binary, then fast-forwards develop to main.
+# Release with a Linux binary, then fast-forwards dev to main.
 on:
   push:
     branches: [main]
@@ -128,7 +128,7 @@ jobs:
               --notes-file release-notes.md
           fi
 
-  sync-develop:
+  sync-dev:
     needs: [bump, release]
     if: needs.bump.outputs.released == 'true'
     runs-on: ubuntu-latest
@@ -138,11 +138,11 @@ jobs:
           fetch-depth: 0
           ref: main
 
-      - name: Fast-forward develop to main
+      - name: Fast-forward dev to main
         run: |
           set -euo pipefail
-          if ! git ls-remote --exit-code --heads origin develop >/dev/null; then
-            echo "::warning::develop branch does not exist; nothing to sync"
+          if ! git ls-remote --exit-code --heads origin dev >/dev/null; then
+            echo "::warning::dev branch does not exist; nothing to sync"
             exit 0
           fi
-          git push origin HEAD:develop
+          git push origin HEAD:dev
