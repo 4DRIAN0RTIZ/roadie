@@ -42,10 +42,12 @@ fn created_issue_is_shown_even_if_the_first_list_after_create_lags() {
         key(KeyCode::Char('s'), KeyModifiers::CONTROL),
     );
     assert!(matches!(app.popup, Popup::None));
+    let create = sb.roadmap_log();
     assert_eq!(
-        sb.roadmap_log().last().unwrap(),
-        "create\twidgets\tBrand new\t--body\t\t--status\tidea"
+        create.first().unwrap(),
+        "create\twidgets\tBrand new\t--body\t## Resumen"
     );
+    assert_eq!(create.last().unwrap(), "===\t--status\tidea");
     // The lagging list omitted #42, yet it is on the board and focused.
     let sel = app.selected_issue().expect("new card focused");
     assert_eq!(sel.number, 42);

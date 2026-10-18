@@ -47,6 +47,10 @@ pub enum Field {
 pub const FORM_STATUSES: [Column; 4] =
     [Column::Idea, Column::Planned, Column::Now, Column::Working];
 
+/// Initial body for newly created roadmap issues. Editing preserves the issue body.
+pub const ISSUE_BODY_TEMPLATE: &str =
+    "## Resumen\n\n## Tareas\n- [ ] Primera tarea\n- [ ] Segunda tarea\n\n===\n";
+
 #[derive(Debug, Clone)]
 pub struct Form {
     pub kind: FormKind,
@@ -64,7 +68,7 @@ impl Form {
         Self {
             kind: FormKind::Create,
             title: TextInput::default(),
-            body: TextInput::default(),
+            body: TextInput::new(ISSUE_BODY_TEMPLATE),
             status: Column::Idea,
             milestones,
             milestone_idx: 0,
@@ -793,6 +797,18 @@ mod tests {
         let mut f = Form::new_create(vec![]);
         f.title.set("[roadmap] ");
         assert!(f.build_new().is_err());
+    }
+
+    #[test]
+    fn create_uses_template_but_edit_keeps_issue_body() {
+        let create = Form::new_create(vec![]);
+        assert_eq!(create.body.as_str(), ISSUE_BODY_TEMPLATE);
+
+        let issue = Issue {
+            body: "existing body".into(),
+            ..Default::default()
+        };
+        assert_eq!(Form::new_edit(&issue).body.as_str(), "existing body");
     }
 
     #[test]
