@@ -195,7 +195,7 @@ pub fn handle_paste(app: &mut App, text: &str) {
     match &mut app.popup {
         Popup::Form(f) => {
             if let Some(t) = f.focused_text_mut() {
-                t.push_str(text);
+                t.paste(text);
             }
         }
         Popup::Comment(t) | Popup::Close(t) | Popup::Search(t) => t.push_str(text),
@@ -542,7 +542,7 @@ fn submit_text_popup(app: &mut App, be: &dyn Backend) {
                 app.popup = Popup::Comment(t);
                 return;
             }
-            match be.comment(&repo, number, t.trim()) {
+            match be.comment(&repo, number, &t.trim()) {
                 Ok(()) => app.set_status(format!("commented on #{number}")),
                 Err(e) => {
                     app.set_error(format!("{e:#}"));
@@ -595,17 +595,11 @@ fn form_key(app: &mut App, be: &dyn Backend, key: KeyEvent) {
                 _ => {}
             }
         }
-        KeyCode::Backspace => {
+        _ => {
             if let Some(t) = form.focused_text_mut() {
-                t.backspace();
+                t.input(key);
             }
         }
-        KeyCode::Char(c) if !ctrl => {
-            if let Some(t) = form.focused_text_mut() {
-                t.push(c);
-            }
-        }
-        _ => {}
     }
 }
 

@@ -175,7 +175,7 @@ fn run_editor(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
     match edited {
         Ok(text) => {
             if let Popup::Form(f) = &mut app.popup {
-                f.body.set(text.trim_end().to_string());
+                f.body.set(text.trim_end());
             }
         }
         Err(e) => app.set_error(format!("{e:#}")),

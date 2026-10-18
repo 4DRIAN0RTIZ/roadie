@@ -135,24 +135,29 @@ impl Form {
     }
 
     fn clean_title(&self) -> Result<String, String> {
-        let t = self.title.trim();
-        if t.strip_prefix("[roadmap]").unwrap_or(t).trim().is_empty() {
+        let title = self.title.trim();
+        if title
+            .strip_prefix("[roadmap]")
+            .unwrap_or(&title)
+            .trim()
+            .is_empty()
+        {
             return Err("title is required".into());
         }
-        Ok(domain::normalize_title(t))
+        Ok(domain::normalize_title(&title))
     }
 
     pub fn build_new(&self) -> Result<NewIssue, String> {
         Ok(NewIssue {
             title: self.clean_title()?,
-            body: self.body.trim().to_string(),
+            body: self.body.trim(),
             status: self.status,
             milestone: self.milestone().map(String::from),
         })
     }
 
     pub fn build_edit(&self) -> Result<(String, String), String> {
-        Ok((self.clean_title()?, self.body.trim().to_string()))
+        Ok((self.clean_title()?, self.body.trim()))
     }
 }
 
