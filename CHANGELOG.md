@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(forms)* Enable cursor editing
 - *(forms)* Enable cursor editing
 - *(forms)* Prefill issue body
+- *(forms)* Render editor cursor
 
 ## [0.2.1] - 2026-09-28
 
