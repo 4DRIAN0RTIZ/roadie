@@ -1097,7 +1097,7 @@ mod tests {
         assert_eq!(
             be.calls(),
             vec![
-                r###"create alpha "[roadmap] New thing" "## Resumen\n\n## Tareas\n\n===\n## Detalle interno\nline1\nline2" Planned Some("M1")"###
+                r###"create alpha "[roadmap] New thing" "## Resumen\n\n## Tareas\n- [ ] Primera tarea\n- [ ] Segunda tarea\n\n===\nline1\nline2" Planned Some("M1")"###
             ]
         );
         assert!(matches!(app.popup, Popup::None));

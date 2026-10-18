@@ -48,7 +48,8 @@ pub const FORM_STATUSES: [Column; 4] =
     [Column::Idea, Column::Planned, Column::Now, Column::Working];
 
 /// Initial body for newly created roadmap issues. Editing preserves the issue body.
-pub const ISSUE_BODY_TEMPLATE: &str = "## Resumen\n\n## Tareas\n\n===\n## Detalle interno\n";
+pub const ISSUE_BODY_TEMPLATE: &str =
+    "## Resumen\n\n## Tareas\n- [ ] Primera tarea\n- [ ] Segunda tarea\n\n===\n";
 
 #[derive(Debug, Clone)]
 pub struct Form {

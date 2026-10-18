@@ -47,7 +47,7 @@ fn created_issue_is_shown_even_if_the_first_list_after_create_lags() {
         create.first().unwrap(),
         "create\twidgets\tBrand new\t--body\t## Resumen"
     );
-    assert_eq!(create.last().unwrap(), "## Detalle interno\t--status\tidea");
+    assert_eq!(create.last().unwrap(), "===\t--status\tidea");
     // The lagging list omitted #42, yet it is on the board and focused.
     let sel = app.selected_issue().expect("new card focused");
     assert_eq!(sel.number, 42);
