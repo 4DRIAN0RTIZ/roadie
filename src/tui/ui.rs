@@ -45,7 +45,8 @@ Board
   ?             this help            q     quit
 
 Forms
-  Tab / Shift+Tab  next / prev field  Left/Right  cycle status/milestone
+  Tab / Shift+Tab  next / prev field  arrows/Home/End move text cursor
+  Left/Right       cycle status/milestone  Backspace/Delete edit at cursor
   Enter            newline in body    Ctrl+S      submit
   Ctrl+E           edit body in $EDITOR   Esc      cancel
 
@@ -572,21 +573,21 @@ fn draw_popup(frame: &mut Frame, app: &App, area: Rect) {
             frame,
             app,
             " Comment (Enter sends, Esc cancels) ",
-            inp.as_str(),
+            &inp.as_str(),
             area,
         ),
         Popup::Close(inp) => draw_input(
             frame,
             app,
             " Close: optional comment (Enter, Esc cancels) ",
-            inp.as_str(),
+            &inp.as_str(),
             area,
         ),
         Popup::Search(inp) => draw_input(
             frame,
             app,
             " Search (Enter applies, Esc cancels) ",
-            inp.as_str(),
+            &inp.as_str(),
             area,
         ),
         Popup::Move(sel) => {
@@ -714,16 +715,28 @@ fn draw_form(frame: &mut Frame, app: &App, f: &Form, r: Rect) {
             .border_style(Style::default().fg(color))
             .title(name.to_string())
     };
-    let cursor = |field: Field| if f.focus == field { "_" } else { "" };
-    frame.render_widget(
-        Paragraph::new(format!("{}{}", f.title.as_str(), cursor(Field::Title)))
-            .block(block(" Title ([roadmap] added if missing) ", Field::Title)),
+    let mut render_text = |input: &super::widgets::TextInput, name: &str, field: Field, area| {
+        let focused = f.focus == field;
+        let mut editor = input.textarea();
+        editor.set_block(block(name, field));
+        editor.set_cursor_line_style(Style::default());
+        editor.set_cursor_style(if focused {
+            Style::default().add_modifier(Modifier::REVERSED)
+        } else {
+            Style::default()
+        });
+        frame.render_widget(&editor, area);
+    };
+    render_text(
+        &f.title,
+        " Title ([roadmap] added if missing) ",
+        Field::Title,
         areas[0],
     );
-    frame.render_widget(
-        Paragraph::new(format!("{}{}", f.body.as_str(), cursor(Field::Body)))
-            .wrap(Wrap { trim: false })
-            .block(block(" Body (Enter newline, Ctrl+E editor) ", Field::Body)),
+    render_text(
+        &f.body,
+        " Body (Enter newline, Ctrl+E editor) ",
+        Field::Body,
         areas[1],
     );
     let mut hint_idx = 2;
@@ -1099,6 +1112,36 @@ mod tests {
         assert_eq!(
             corner(t0 + super::super::effects::POPUP_FADE),
             app.theme.border_popup
+        );
+    }
+
+    #[test]
+    fn focused_form_editor_shows_cursor_and_scrolls_to_it() {
+        let mut app = app_with(&[]);
+        let mut form = Form::new_create(vec![]);
+        form.focus = Field::Body;
+        form.body.set(
+            (0..30)
+                .map(|n| format!("line-{n:02}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
+        app.popup = Popup::Form(form);
+
+        let buffer = render_at(&app, 100, 24, Instant::now());
+        let rendered = text(&buffer);
+        assert!(rendered.contains("line-29"));
+        assert!(!rendered.contains("line-00"));
+        assert!(
+            (0..buffer.area.height).any(|y| (0..buffer.area.width)
+                .any(|x| { buffer[(x, y)].modifier.contains(Modifier::REVERSED) })),
+            "focused editor cursor should be visible"
+        );
+        assert!(
+            (0..buffer.area.height)
+                .any(|y| (0..buffer.area.width)
+                    .any(|x| buffer[(x, y)].fg == app.theme.border_active)),
+            "focused editor border should use the active color"
         );
     }
 }

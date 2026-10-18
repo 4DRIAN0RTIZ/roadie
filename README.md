@@ -164,12 +164,12 @@ cache) and runs in about a second.
 
 Releases are automated with [git-cliff](https://git-cliff.org) and GitHub Actions.
 
-- Branch model: work lands on `develop`, releases are cut from `main`.
-- Push to `develop`: `changelog.yml` regenerates the `[Unreleased]` section of `CHANGELOG.md`.
-- Push to `main`: `release.yml` computes the next version, bumps `Cargo.toml`/`Cargo.lock`, regenerates `CHANGELOG.md`, commits `chore(release): vX.Y.Z`, creates an annotated tag, publishes a GitHub Release (notes from git-cliff, `roadie-linux-x86_64` binary plus `.sha256`), and fast-forwards `develop` to `main`.
+- Branch model: work lands on `dev`, releases are cut from `main`.
+- Push to `dev`: `changelog.yml` regenerates the `[Unreleased]` section of `CHANGELOG.md`.
+- Push to `main`: `release.yml` computes the next version, bumps `Cargo.toml`/`Cargo.lock`, regenerates `CHANGELOG.md`, commits `chore(release): vX.Y.Z`, creates an annotated tag, publishes a GitHub Release (notes from git-cliff, `roadie-linux-x86_64` binary plus `.sha256`), and fast-forwards `dev` to `main`.
 - Conventional commits drive the bump: `feat` bumps minor, `fix` (and other releasable types) bump patch, `type!:` or a `BREAKING CHANGE` footer bumps major (while below 1.0 git-cliff follows its configured 0.x rules). `chore`, `test`, `ci`, `style` and `build` do not appear in the changelog.
-- Cut a release: merge `develop` into `main` and push (or run the "Publish release" workflow manually). If there is nothing new since the latest tag, no release is made.
-- Requirements: a GitHub remote with both `develop` and `main` branches must exist, and Actions needs write access to contents (Settings > Actions > Workflow permissions).
+- Cut a release: merge `dev` into `main` and push (or run the "Publish release" workflow manually). If there is nothing new since the latest tag, no release is made.
+- Requirements: a GitHub remote with both `dev` and `main` branches must exist, and Actions needs write access to contents (Settings > Actions > Workflow permissions).
 
 ## License
 

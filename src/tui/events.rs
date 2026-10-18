@@ -195,7 +195,7 @@ pub fn handle_paste(app: &mut App, text: &str) {
     match &mut app.popup {
         Popup::Form(f) => {
             if let Some(t) = f.focused_text_mut() {
-                t.push_str(text);
+                t.paste(text);
             }
         }
         Popup::Comment(t) | Popup::Close(t) | Popup::Search(t) => t.push_str(text),
@@ -542,7 +542,7 @@ fn submit_text_popup(app: &mut App, be: &dyn Backend) {
                 app.popup = Popup::Comment(t);
                 return;
             }
-            match be.comment(&repo, number, t.trim()) {
+            match be.comment(&repo, number, &t.trim()) {
                 Ok(()) => app.set_status(format!("commented on #{number}")),
                 Err(e) => {
                     app.set_error(format!("{e:#}"));
@@ -592,20 +592,14 @@ fn form_key(app: &mut App, be: &dyn Backend, key: KeyEvent) {
             match form.focus {
                 Field::Status => form.cycle_status(d),
                 Field::Milestone => form.cycle_milestone(d),
-                _ => {}
+                Field::Title | Field::Body => form.focused_text_mut().unwrap().input(key),
             }
         }
-        KeyCode::Backspace => {
+        _ => {
             if let Some(t) = form.focused_text_mut() {
-                t.backspace();
+                t.input(key);
             }
         }
-        KeyCode::Char(c) if !ctrl => {
-            if let Some(t) = form.focused_text_mut() {
-                t.push(c);
-            }
-        }
-        _ => {}
     }
 }
 
@@ -1102,9 +1096,31 @@ mod tests {
         press(&mut app, &be, &[ctrl('s')]);
         assert_eq!(
             be.calls(),
-            vec![r#"create alpha "[roadmap] New thing" "line1\nline2" Planned Some("M1")"#]
+            vec![
+                r###"create alpha "[roadmap] New thing" "## Resumen\n\n## Tareas\n- [ ] Primera tarea\n- [ ] Segunda tarea\n\n===\nline1\nline2" Planned Some("M1")"###
+            ]
         );
         assert!(matches!(app.popup, Popup::None));
+    }
+
+    #[test]
+    fn form_text_fields_accept_horizontal_cursor_keys() {
+        let (mut app, be) = standard();
+        press(&mut app, &be, &[ch('n')]);
+        type_str(&mut app, &be, "ac");
+        press(
+            &mut app,
+            &be,
+            &[key(KeyCode::Left), ch('b'), key(KeyCode::Right), ch('d')],
+        );
+        press(&mut app, &be, &[ctrl('s')]);
+
+        assert_eq!(
+            be.calls(),
+            vec![
+                r###"create alpha "[roadmap] abcd" "## Resumen\n\n## Tareas\n- [ ] Primera tarea\n- [ ] Segunda tarea\n\n===" Idea None"###
+            ]
+        );
     }
 
     #[test]
