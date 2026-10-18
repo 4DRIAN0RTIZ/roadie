@@ -1108,7 +1108,11 @@ mod tests {
         let (mut app, be) = standard();
         press(&mut app, &be, &[ch('n')]);
         type_str(&mut app, &be, "ac");
-        press(&mut app, &be, &[key(KeyCode::Left), ch('b'), key(KeyCode::Right), ch('d')]);
+        press(
+            &mut app,
+            &be,
+            &[key(KeyCode::Left), ch('b'), key(KeyCode::Right), ch('d')],
+        );
         press(&mut app, &be, &[ctrl('s')]);
 
         assert_eq!(
