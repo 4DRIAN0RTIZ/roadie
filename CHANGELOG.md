@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 - *(forms)* Satisfy clippy for textarea editor
 - *(forms)* Match roadmap issue template
+- *(forms)* Route horizontal arrows to text cursor
 
 
 ### Features
