@@ -26,6 +26,11 @@ impl TextInput {
         self.editor.lines().join("\n")
     }
 
+    /// Cloned render widget; input state remains owned by this buffer.
+    pub fn textarea(&self) -> TextArea<'static> {
+        (*self.editor).clone()
+    }
+
     pub fn input(&mut self, key: KeyEvent) {
         self.editor.input(Input::from(Event::Key(key)));
     }

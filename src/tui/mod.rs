@@ -173,11 +173,32 @@ fn run_editor(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
     let _ = enter();
     let _ = terminal.clear();
     match edited {
-        Ok(text) => {
-            if let Popup::Form(f) = &mut app.popup {
-                f.body.set(text.trim_end());
-            }
-        }
+        Ok(text) => apply_editor_text(app, &text),
         Err(e) => app.set_error(format!("{e:#}")),
+    }
+}
+
+fn apply_editor_text(app: &mut App, text: &str) {
+    if let Popup::Form(f) = &mut app.popup {
+        f.body.set(text.trim_end());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tui::app::Form;
+
+    #[test]
+    fn external_editor_replaces_the_complete_form_body() {
+        let mut app = App::new();
+        app.popup = Popup::Form(Form::new_create(vec![]));
+
+        apply_editor_text(&mut app, "first line\nsecond line\n");
+
+        let Popup::Form(form) = app.popup else {
+            panic!("form should remain open");
+        };
+        assert_eq!(form.body.as_str(), "first line\nsecond line");
     }
 }
