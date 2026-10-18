@@ -4,7 +4,7 @@ use ratatui_textarea::{CursorMove, Input, TextArea};
 /// Multiline text editor backed by `ratatui-textarea`.
 #[derive(Debug, Clone)]
 pub struct TextInput {
-    editor: TextArea<'static>,
+    editor: Box<TextArea<'static>>,
 }
 
 impl Default for TextInput {
@@ -17,7 +17,9 @@ impl TextInput {
     pub fn new(text: impl AsRef<str>) -> Self {
         let mut editor = TextArea::from(text.as_ref().split('\n'));
         editor.move_cursor(CursorMove::Jump(u16::MAX, u16::MAX));
-        Self { editor }
+        Self {
+            editor: Box::new(editor),
+        }
     }
 
     pub fn as_str(&self) -> String {
