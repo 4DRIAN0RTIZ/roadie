@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 - *(forms)* Satisfy clippy for textarea editor
+- *(forms)* Match roadmap issue template
 
 
 ### Features
 - *(forms)* Enable cursor editing
 - *(forms)* Enable cursor editing
+- *(forms)* Prefill issue body
 
 ## [0.2.1] - 2026-09-28
 
